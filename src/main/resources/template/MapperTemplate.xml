@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 模板生成sql，不建议自定义sql写在此文件中， 这样在增加或减少字段后，直接覆盖文件即可-->
+<mapper namespace="${packageName}.dao.${className}Dao">
+	<resultMap id="BaseResultMap" type="${packageName}.entity.${className}Entity">
+#foreach($item in $columnDatas)
+		<result column="$!item.columnName" property="$!item.formatColumnName" />
+#end
+	</resultMap>
+
+	<sql id="Base_Column_List">
+#foreach($item in $columnDatas)
+#if($velocityCount == 1)
+	  	##
+#end
+#if($velocityCount % 10 == 0)
+
+	  	##
+#end
+#if($velocityCount != $columnDatas.size())
+$!item.columnName,##
+#else
+$!item.columnName
+#end
+#end
+	</sql>
+
+
+	<sql id="Where_Clause">
+		<where>
+			enable = 1
+#foreach($item in $columnDatas)
+#if($item.columnName != "created_time" && $item.columnName !="updated_time" && $item.columnName != "enable")
+#if($item.dataType == 'String')
+			<if test="$item.formatColumnName !=null and $item.formatColumnName != ''">and $item.columnName = #{$item.formatColumnName}</if>
+#else
+			<if test="$item.formatColumnName != null">and $item.columnName = #{$item.formatColumnName}</if>
+#end
+#end
+#end
+		</where>
+	</sql>
+
+	<insert id="insert" parameterType="${packageName}.entity.${className}Entity" useGeneratedKeys="true" keyProperty="id">
+		insert into ${tableName}
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+#foreach($item in $columnDatas)
+#if($item.columnName != "id")
+#if($!item.columnName == "created_time" || $!item.columnName =="updated_time" || $!item.columnName =="enable")
+			$item.columnName,
+#else
+#if($item.dataType == 'String')
+			<if test="$item.formatColumnName !=null and $item.formatColumnName != ''">$item.columnName ,</if>
+#else
+			<if test="$item.formatColumnName != null">$item.columnName ,</if>
+#end
+#end
+#end
+#end
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+#foreach($item in $columnDatas)
+#if($item.columnName != "id")
+#if($!item.columnName == "created_time" || $!item.columnName =="updated_time" || $!item.columnName =="enable")
+			#{$item.formatColumnName},
+#else
+#if($item.dataType == 'String')
+			<if test="$item.formatColumnName !=null and $item.formatColumnName != ''">#{$item.formatColumnName} ,</if>
+#else
+			<if test="$item.formatColumnName != null">#{$item.formatColumnName},</if>
+#end
+#end
+#end
+#end
+		</trim>
+	</insert>
+
+	<insert id="insertByBatch" parameterType="java.util.List">
+		insert into ${tableName}(
+#foreach($item in $columnDatas)
+#if($velocityCount == 1)
+			##
+#end
+#if($velocityCount % 10 == 0)
+
+			##
+#end
+#if($item.columnName != "id")
+#if($velocityCount!=$columnDatas.size())
+$item.columnName ,##
+#else
+$item.columnName
+#end
+#end
+#end
+		)
+		values
+		<foreach collection="list" item="data" index="index" separator=",">
+		(
+#foreach($item in $columnDatas)
+#if($velocityCount == 1)
+			##
+#end
+#if($velocityCount % 10 == 0)
+
+			##
+#end
+#if($item.columnName != "id")
+#if($velocityCount != $columnDatas.size())
+#{data.$item.formatColumnName} ,##
+#else
+#{data.$item.formatColumnName}
+#end
+#end
+#end
+		)
+		</foreach>
+	</insert>
+
+	<update id="update" parameterType="${packageName}.entity.${className}Entity">
+		update ${tableName}
+		<set>
+#foreach($item in $columnDatas)
+#if($item.columnName != "created_time" && $item.columnName !="id" && $item.columnName != "enable")
+#if($item.columnName == "updated_time")
+			$item.columnName = #{$item.formatColumnName},
+#else
+#if($item.dataType == 'String')
+			<if test="$item.formatColumnName !=null and $item.formatColumnName != ''"> $item.columnName = #{$item.formatColumnName}, </if>
+#else
+			<if test="$item.formatColumnName != null"> $item.columnName = #{$item.formatColumnName}, </if>
+#end
+#end
+#end
+#end
+		</set>
+		where enable = 1 and id=${idCriteria}
+	</update>
+
+	<update id="delete" parameterType="java.lang.Integer">
+		update ${tableName} set enable=0 where id = ${idCriteria}
+	</update>
+
+	<update id="deleteBatch" parameterType="java.util.List">
+		update ${tableName} set enable = 0 where id in
+		<foreach collection="list" item="itemId" index="index" open="(" close=")" separator=",">
+			<trim prefix="#{" suffix="}">itemId</trim>
+		</foreach>
+	</update>
+
+	<select id="queryById" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+		select <include refid="Base_Column_List" />
+		from ${tableName} where id = ${idCriteria} and enable=1
+	</select>
+
+	<select id="queryCountByEntity" resultType="java.lang.Integer" parameterType="${packageName}.entity.${className}Entity">
+		select count(1) from ${tableName}
+		<include refid="Where_Clause" />
+	</select>
+
+	<select id="queryListByEntity" resultMap="BaseResultMap" parameterType="${packageName}.entity.${className}Entity">
+		select <include refid="Base_Column_List" />
+		from ${tableName}
+		<include refid="Where_Clause" />
+	</select>
+
+</mapper>   
